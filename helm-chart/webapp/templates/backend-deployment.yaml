@@ -16,6 +16,8 @@ spec:
         app: backend
     spec:
       serviceAccountName: {{ .Values.serviceAccount.name }}
+      imagePullSecrets:
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"

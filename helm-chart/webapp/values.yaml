@@ -20,3 +20,6 @@ ingress:
   host: apps.local
 serviceAccount:
   name: webapp-sa
+
+imagePullSecrets:
+  - name: ghcr-creds
