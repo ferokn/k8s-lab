@@ -1,28 +1,22 @@
 namespace: webapp
-
 frontend:
   image:
-    repository: webapp-frontend
-    tag: latest
+    repository: ghcr.io/ferokn/webapp-frontend
+    tag: 21d3f7a
   replicas: 2
   port: 80
-
 backend:
   image:
-    repository: webapp-backend
-    tag: latest
+    repository: ghcr.io/ferokn/webapp-backend
+    tag: 21d3f7a
   replicas: 2
   port: 8080
-
 config:
   appMessage: "Hello from ConfigMap"
-
 secret:
   appSecretToken: "super-secret-token"
-
 ingress:
   className: nginx
   host: apps.local
-
 serviceAccount:
   name: webapp-sa
