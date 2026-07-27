@@ -1,0 +1,41 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: webapp-alerts
+  namespace: webapp
+  labels:
+    release: kube-prometheus-stack
+spec:
+  groups:
+    - name: webapp.rules
+      rules:
+        - alert: BackendDown
+          expr: up{job="webapp-backend"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Backend je nedostupný"
+            description: "Backend target v namespace webapp je down dlhšie ako 2 minúty."
+
+        - alert: BackendPodCrashLooping
+          expr: increase(kube_pod_container_status_restarts_total{namespace="webapp"}[15m]) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod v namespace webapp sa reštartuje príliš často"
+            description: "Pod {{ $labels.pod }} sa reštartoval viac ako 3-krát za posledných 15 minút."
+
+        - alert: BackendHighMemoryUsage
+          expr: >
+            sum(container_memory_working_set_bytes{namespace="webapp", container="backend"})
+            /
+            sum(kube_pod_container_resource_limits{namespace="webapp", container="backend", resource="memory"})
+            > 0.85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Backend blízko memory limitu"
+            description: "Backend využíva viac ako 85% svojho memory limitu."

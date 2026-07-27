@@ -1,0 +1,6 @@
+apiVersion: v2
+name: webapp
+description: Jednoduchá cloud-native demo aplikácia (frontend + backend) pre lokálny K8s lab
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

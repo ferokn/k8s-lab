@@ -1,0 +1,71 @@
+# Tento súbor treba skopírovať do .github/workflows/ci-cd.yaml v tvojom Git repozitári
+name: CI-CD
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/backend/**"
+      - "apps/frontend/**"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        component: [backend, frontend]
+    outputs:
+      sha: ${{ steps.vars.outputs.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set short SHA
+        id: vars
+        run: echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Login do GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build & push image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/${{ matrix.component }}
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/webapp-${{ matrix.component }}:${{ steps.vars.outputs.sha }}
+            ghcr.io/${{ github.repository_owner }}/webapp-${{ matrix.component }}:latest
+
+  update-helm-chart:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Nastav image repository a tag v values.yaml
+        run: |
+          sudo snap install yq || true
+          SHA=${{ needs.build-and-push.outputs.sha }}
+          yq -i '.backend.image.repository = "ghcr.io/${{ github.repository_owner }}/webapp-backend"' helm-chart/webapp/values.yaml
+          yq -i ".backend.image.tag = \"${SHA}\"" helm-chart/webapp/values.yaml
+          yq -i '.frontend.image.repository = "ghcr.io/${{ github.repository_owner }}/webapp-frontend"' helm-chart/webapp/values.yaml
+          yq -i ".frontend.image.tag = \"${SHA}\"" helm-chart/webapp/values.yaml
+
+      - name: Commit & push zmenu v Helm chart
+        run: |
+          git config user.name "ci-bot"
+          git config user.email "ci-bot@users.noreply.github.com"
+          git add helm-chart/webapp/values.yaml
+          git commit -m "ci: bump image tag to ${{ needs.build-and-push.outputs.sha }}" || echo "no changes"
+          git push
+      # Tento push do main je práve ten "trigger", na ktorý reaguje ArgoCD (automated sync)
+      # a nasadí novú verziu image do clustra bez manuálneho zásahu.

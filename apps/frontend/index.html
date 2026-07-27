@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="sk">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo Webapp</title>
+  <style>
+    body { font-family: sans-serif; margin: 40px; }
+    pre { background: #f4f4f4; padding: 12px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Frontend</h1>
+  <p>Odpoveď z backendu:</p>
+  <pre id="output">načítavam...</pre>
+
+  <script>
+    fetch("/api/hello")
+      .then(r => r.json())
+      .then(data => {
+        document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+      })
+      .catch(err => {
+        document.getElementById("output").textContent = "Chyba: " + err;
+      });
+  </script>
+</body>
+</html>

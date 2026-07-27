@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: webapp
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    # TIP: nahraď za URL svojho vlastného GitHub repozitára, kam pushneš tento priečinok
+    repoURL: https://github.com/<tvoj-github-username>/k8s-lab.git
+    targetRevision: main
+    path: helm-chart/webapp
+    helm:
+      valueFiles:
+        - values.yaml
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: webapp
+
+  syncPolicy:
+    automated:
+      prune: true      # zmaže resources, ktoré už nie sú v Git
+      selfHeal: true    # opraví manuálne (mimo Git) urobené zmeny v clusteri
+    syncOptions:
+      - CreateNamespace=true

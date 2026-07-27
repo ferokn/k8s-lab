@@ -1,0 +1,48 @@
+# Hodnoty pre `helm install kube-prometheus-stack` - zjednodušené pre lokálny lab (kind/minikube)
+
+prometheus:
+  prometheusSpec:
+    # dôležité: aby Prometheus zbieral aj naše vlastné ServiceMonitor/PrometheusRule
+    # mimo default labelov nastavených Helm release-om kube-prometheus-stack
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+    retention: 1d
+    storageSpec: {}   # bez perzistentného storage - lab beží efemérne
+
+alertmanager:
+  alertmanagerSpec:
+    resources:
+      requests:
+        cpu: 25m
+        memory: 64Mi
+      limits:
+        cpu: 100m
+        memory: 128Mi
+  config:
+    route:
+      receiver: "default"
+      group_by: ["alertname", "namespace"]
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 3h
+    receivers:
+      - name: "default"
+        # Pre lab necháme prázdny receiver (alerty budú vidieť v Alertmanager UI).
+        # Pre reálne upozornenia doplň napr. slack_configs alebo webhook_configs.
+
+grafana:
+  adminPassword: admin
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
