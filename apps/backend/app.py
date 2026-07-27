@@ -18,7 +18,7 @@ def health():
 @app.route("/api/hello")
 def hello():
     REQUEST_COUNTER.labels(endpoint="hello").inc()
-    message = os.environ.get("APP_MESSAGE", "Hello from backend")
+    message = os.environ.get("APP_MESSAGE", "Hello from backend v2")
     secret_present = bool(os.environ.get("APP_SECRET_TOKEN"))
     return jsonify(message=message, secret_present=secret_present)
 
